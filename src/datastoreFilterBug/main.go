@@ -57,9 +57,21 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 			_ = dsClient.Delete(ctx, k)
 		}()
 	}
+	k := datastore.IncompleteKey("MyStruct", nil)
+	k, err = dsClient.Put(ctx, k, &MyStruct{
+		Name:    fmt.Sprintf("Struct-%d", 10),
+		Created: time.Time{},
+	})
+	if err != nil {
+		_, _ = fmt.Fprint(w, "Creating MyStruct", err)
+		return
+	}
+	defer func() {
+		_ = dsClient.Delete(ctx, k)
+	}()
 
 	res1 := make([]MyStruct, 0)
-	badQuery := datastore.NewQuery("MyStruct").Filter("Created > ", time.Now().Add(-2 * time.Hour))
+	badQuery := datastore.NewQuery("MyStruct").Filter("Created > ", time.Now().Add(-6 * time.Hour))
 	keys, err := dsClient.GetAll(ctx, badQuery, &res1)
 	if err != nil {
 		_, _ = fmt.Fprint(w, "BadQuery", err)
